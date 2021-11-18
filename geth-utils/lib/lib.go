@@ -48,6 +48,7 @@ func FreeString(str *C.char) {
 	C.free(unsafe.Pointer(str))
 }
 
+// FIXME: GethConfig unmarshals from JsonConfig, which is extremely confusing.
 type GethConfig struct {
 	config    runtime.Config
 	contracts []gethutil.Account
