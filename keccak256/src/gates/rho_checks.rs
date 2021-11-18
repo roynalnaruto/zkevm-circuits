@@ -261,8 +261,6 @@ impl RotatingVariables {
 
 #[derive(Debug, Clone)]
 pub struct LaneRotateConversionConfig<F> {
-    q_enable: Selector,
-    q_is_special: Selector,
     adv: RhoAdvices,
     chunk_rotate_convert_configs: Vec<ChunkRotateConversionConfig<F>>,
     special_chunk_config: SpecialChunkConfig<F>,
@@ -310,8 +308,6 @@ impl<F: FieldExt> LaneRotateConversionConfig<F> {
         );
 
         Self {
-            q_enable,
-            q_is_special,
             adv,
             chunk_rotate_convert_configs,
             special_chunk_config,
@@ -389,8 +385,6 @@ pub struct ChunkRotateConversionConfig<F> {
     base_13_to_base_9_lookup: Base13toBase9TableConfig<F>,
     block_count_acc_config: BlockCountAccConfig<F>,
     chunk_idx: u32,
-    rotation: u32,
-    step: u32,
 }
 
 impl<F: FieldExt> ChunkRotateConversionConfig<F> {
@@ -460,8 +454,6 @@ impl<F: FieldExt> ChunkRotateConversionConfig<F> {
             base_13_to_base_9_lookup,
             block_count_acc_config,
             chunk_idx,
-            rotation,
-            step,
         }
     }
 
@@ -471,8 +463,9 @@ impl<F: FieldExt> ChunkRotateConversionConfig<F> {
         offset: usize,
         rv: &mut RotatingVariables,
     ) -> Result<BlockCount2<F>, Error> {
+        self.q_enable.enable(region, offset)?;
         region.assign_advice(
-            || "Input Coef",
+            || format!("Input Coef {}", self.chunk_idx),
             self.adv.input.coef,
             offset,
             || biguint_to_f::<F>(&rv.input_coef),
@@ -662,6 +655,7 @@ impl<F: FieldExt> BlockCountAccConfig<F> {
         block_count: u32,
         block_count_acc: [u32; 2],
     ) -> Result<BlockCount2<F>, Error> {
+        self.q_enable.enable(region, offset)?;
         let block_count = F::from_u64(block_count.into());
         let acc = block_count_acc.map(|x| F::from_u64(x.into()));
         region.assign_advice(
